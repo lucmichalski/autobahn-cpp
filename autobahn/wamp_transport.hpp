@@ -41,92 +41,74 @@ class wamp_transport_handler;
 class wamp_transport
 {
 public:
-    /*!
-     * Attempts to connect the transport.
-     *
-     * @return A future that will be satisfied when the connect attempt
-     *         has been made.
+    /*
+     * SENDER interface
      */
-    virtual boost::future<void> connect() = 0;
-
-    /*!
-     * Attempts to disconnect the transport.
-     *
-     * @return A future that will be satisfied when the disconnect attempt
-     *         has been made.
-     */
-    virtual boost::future<void> disconnect() = 0;
-
-    /*!
-     * Determines if the transport is connected.
-     *
-     * @return Whether or not the transport is connected.
-     */
-    virtual bool is_connected() const = 0;
-
-    /*!
-     * Attaches a handler to the transport. Only one handler may
-     * be attached at any given time.
-     *
-     * @param handler The handler to attach to this transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully attached.
-     */
-    virtual void attach(
-            const std::shared_ptr<wamp_transport_handler>& handler) = 0;
-
-    /*!
-     * Detaches the handler currently attached to the transport.
-     *
-     * @return A future that will be satisfied when the transport
-     *         handler has been successfully detached.
-     */
-    virtual void detach() = 0;
-
-    /*!
-     * Determines if the transport has a handler attached.
-     *
-     * @return Whether or not a handler is attached.
-     */
-    virtual bool has_handler() const = 0;
 
     /*!
      * Send the given WAMP message over the transport to the peer.
-     *
-     * This method does _not_ block. An implementation of this method will
-     * usually serialize the WAMP message to a byte string, frame the bytes
-     * according to the WAMP transport framing in place (e.g. WebSocket or
-     * RawSocket) and then buffer and arrange for asynchronous sending of
-     * the bytes, but return immediately.
-     *
-     * Note that when you first send message 1 and then message 2, _and_
-     * message 2 was indeed received by the peer, it is guaranteed that
-     * a) message 1 was also received, and b) that the order of receiving
-     * first message 1 and then 2 is preserved. Hence a transport guarantees
-     * strict message ordering and a slightly weaker form of reliability.
      *
      * @param message The message to be sent.
      */
     virtual void send(const std::shared_ptr<wamp_message>& message) = 0;
 
     /*!
-     * Pause receiving messages on the attached transport handler. This is
-     * used by transport handlers to excert backpressure on the sending peer.
+     * Listener type for "on_pause_sending" events.
      */
-    virtual void pause() = 0;
+    typedef std::function<void()> on_pause_sending_t;
 
     /*!
-     * Resume receiving messages on the attached transport handler. This is
-     * used by transport handlers to signal readiness to consume more messages
-     * and lift backpressure from the sending peer.
+     * Add a listener to "on_pause_sending" events. The "on_pause_sending" event fires when the
+     * high-watermark of the outgoing leg is reached. This happens when the
+     * receiving peer (or network link) cannot keep up. Senders should stop sending
+     * messages until "on_resume_sending" fires. When senders continue sending messages
+     * anyway, messages will stack up in user-space buffers and memory will
+     * ultimately run away. This is used to signal backpressure from the receiving
+     * peer to user code.
      */
-    virtual void resume() = 0;
+    virtual void on_pause_sending(on_pause_sending_t& listener) = 0;
 
     /*!
-     * Default virtual destructor.
+     * Listener type for "on_resume_sending" events.
      */
-    virtual ~wamp_transport() = default;
+    typedef std::function<void()> on_resume_sending_t;
+
+    /*!
+     * Add a listener to "on_resume_sending" events. The "on_resume_sending" event fires when the
+     * low-watermark of the outgoing leg is reached. This happens when the outgoing
+     * buffers have drained and the receiver has catched up. Senders now may start
+     * sending messages again. This is used to signal the reduction of backpressure
+     * from the receiving peer to user code.
+     */
+    virtual void on_resume_sending(on_resume_sending_t& listener) = 0;
+
+
+    /*
+     * RECEIVER interface
+     */
+
+    /*!
+     * Listener type for "on_message" events.
+     */
+    typedef std::function<void(const wamp_message&)> on_message_t;
+
+    /*!
+     * Add a listener to "on_message" events.
+     */
+    virtual void on_message(on_message_t& listener) = 0;
+
+    /*!
+     * Pause receiving messages and firing "on_message" events. This is
+     * used to exert backpressure on the sending peer.
+     */
+    virtual void pause_receiving() = 0;
+
+    /*!
+     * Resume receiving messages and firing "on_message" events. This is
+     * used to signal readiness to consume more messages and lift backpressure
+     * from the sending peer.
+     */
+    virtual void resume_receiving() = 0;
 };
 
 } // namespace autobahn

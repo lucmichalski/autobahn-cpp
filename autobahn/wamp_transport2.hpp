@@ -16,15 +16,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef AUTOBAHN_WAMP_TRANSPORT_HANDLER_HPP
-#define AUTOBAHN_WAMP_TRANSPORT_HANDLER_HPP
+#ifndef AUTOBAHN_WAMP_TRANSPORT_HPP
+#define AUTOBAHN_WAMP_TRANSPORT_HPP
 
 // http://stackoverflow.com/questions/22597948/using-boostfuture-with-then-continuations/
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
 #define BOOST_THREAD_PROVIDES_FUTURE_WHEN_ALL_WHEN_ANY
-
-#include "wamp_message.hpp"
 
 #include <boost/thread/future.hpp>
 #include <memory>
@@ -32,36 +30,38 @@
 
 namespace autobahn {
 
-class wamp_transport;
+class wamp_message;
+class wamp_transport_handler;
 
 /*!
- * Provides an abstraction for associating a handler with a transport.
+ * Provides an abstraction for a transport to be used by the session. A wamp
+ * transport is defined as being message based, bidirectional, reliable, and
+ * ordered.
  */
-class wamp_transport_handler
+class wamp_transport
 {
 public:
     /*!
-     * Called by the transport when a message is received.
+     * Send the given WAMP message over the transport to the peer.
      *
-     * @param message The message that has been received.
+     * @param message The message to be sent.
      */
-    virtual void receive(const wamp_message& message) = 0;
+    virtual void send(const std::shared_ptr<wamp_message>& message) = 0;
 
     /*!
-     * Called by the transport when outgoing buffers are filling up (have reached
-     * the high watermark of buffered data) and this transport handler should (temporarily)
-     * stop sending messages.
+     * Pause receiving messages and firing "on_message" events. This is
+     * used to excert backpressure on the sending peer.
      */
-    virtual void pause_sending() = 0;
+    virtual void pause_receiving() = 0;
 
     /*!
-     * Called by the transport when outgoing buffers are getting empty (have reached
-     * the low watermark of buffered data) and this transport handler may resume
-     * sending messages.
+     * Resume receiving messages and firing "on_message" events. This is
+     * used to signal readiness to consume more messages and lift backpressure
+     * from the sending peer.
      */
-    virtual void resume_sending() = 0;
+    virtual void resume_receiving() = 0;
 };
 
 } // namespace autobahn
 
-#endif // AUTOBAHN_WAMP_TRANSPORT_HANDLER_HPP
+#endif // AUTOBAHN_WAMP_TRANSPORT_HPP
