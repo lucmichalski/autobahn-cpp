@@ -63,6 +63,20 @@ public:
     virtual void on_message(const wamp_message& message) = 0;
 
     /*!
+     * Called by the transport when outgoing buffers are filling up (have reached
+     * the high watermark of buffered data) and this transport handler should (temporarily)
+     * stop sending messages.
+     */
+    virtual void on_pause() = 0;
+
+    /*!
+     * Called by the transport when outgoing buffers are getting empty (have reached
+     * the low watermark of buffered data) and this transport handler may resume
+     * sending messages.
+     */
+    virtual void on_resume() = 0;
+
+    /*!
      * Default virtual destructor.
      */
     virtual ~wamp_transport_handler() = default;
