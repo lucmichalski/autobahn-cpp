@@ -41,11 +41,26 @@ class wamp_transport_handler
 {
 public:
     /*!
-     * Called by the transport when a message is received.
+     * Called by the transport when attaching this handler.
+     *
+     * @param transport The transport being attached to.
+     */
+    virtual void on_attach(const std::shared_ptr<wamp_transport>& transport) = 0;
+
+    /*!
+     * Called by the transport when detaching this handler.
+     *
+     * @param was_clean Whether or not the transport is cleanly detaching.
+     * @param reason The reason for detaching.
+     */
+    virtual void on_detach(bool was_clean, const std::string& reason) = 0;
+
+    /*!
+     * Called by the transport when a message was received.
      *
      * @param message The message that has been received.
      */
-    virtual void receive(const wamp_message& message) = 0;
+    virtual void on_receive(const wamp_message& message) = 0;
 
     /*!
      * Called by the transport when outgoing buffers are filling up (have reached
@@ -60,6 +75,11 @@ public:
      * sending messages.
      */
     virtual void resume_sending() = 0;
+
+    /*!
+     * Default virtual destructor.
+     */
+    virtual ~wamp_transport_handler() = default;
 };
 
 } // namespace autobahn

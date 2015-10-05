@@ -42,7 +42,39 @@ class wamp_transport
 {
 public:
     /*!
+     * Attaches a handler to the transport. Only one handler may
+     * be attached at any given time.
+     *
+     * @param handler The handler to attach to this transport.
+     */
+    virtual void attach(const std::shared_ptr<wamp_transport_handler>& handler) = 0;
+
+    /*!
+     * Detaches the handler currently attached to the transport.
+     */
+    virtual void detach() = 0;
+
+    /*!
+     * Determines if the transport has a handler attached.
+     *
+     * @return Whether or not a handler is attached.
+     */
+    virtual bool has_handler() const = 0;
+
+    /*!
      * Send the given WAMP message over the transport to the peer.
+     *
+     * This method does _not_ block. An implementation of this method will
+     * usually serialize the WAMP message to a byte string, frame the bytes
+     * according to the WAMP transport framing in place (e.g. WebSocket or
+     * RawSocket) and then buffer and arrange for asynchronous sending of
+     * the bytes, but return immediately.
+     *
+     * Note that when you first send message 1 and then message 2, _and_
+     * message 2 was indeed received by the peer, it is guaranteed that
+     * a) message 1 was also received, and b) that the order of receiving
+     * first message 1 and then 2 is preserved. Hence a transport guarantees
+     * strict message ordering and a slightly weaker form of reliability.
      *
      * @param message The message to be sent.
      */
@@ -60,6 +92,11 @@ public:
      * from the sending peer.
      */
     virtual void resume_receiving() = 0;
+
+    /*!
+     * Default virtual destructor.
+     */
+    virtual ~wamp_transport_handler() = default;
 };
 
 } // namespace autobahn
