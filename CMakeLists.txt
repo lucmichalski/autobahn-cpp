@@ -1,7 +1,22 @@
-# Use this for installing AutobahnCpp into <prefix>/include.
-cmake_minimum_required(VERSION 2.8)
+# Copyright (c) 2015, David Hirvonen, Ruslan Baratov
+# All rights reserved.
 
-project(autobahn-cpp)
+cmake_minimum_required(VERSION 3.0)
+
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.14.3.tar.gz"
+    SHA1 "e05bc95f6d62b7c55188044e39e8be5afb1e8af4"
+)
+
+project(autobahn-cpp VERSION 0.1.0) # Don't see version #?
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# See: cmake/Hunter/config.cmake
+hunter_add_package(Sugar)
+include("${SUGAR_ROOT}/cmake/Sugar")
+include(sugar_include)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "-stdlib=libc++ -Wno-unused-local-typedefs -Wno-unknown-warning-option ${CMAKE_CXX_FLAGS}")
