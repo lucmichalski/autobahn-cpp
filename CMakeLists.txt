@@ -4,12 +4,41 @@
 cmake_minimum_required(VERSION 3.0)
 
 include("cmake/HunterGate.cmake")
+
 HunterGate(
     URL "https://github.com/ruslo/hunter/archive/v0.14.3.tar.gz"
     SHA1 "e05bc95f6d62b7c55188044e39e8be5afb1e8af4"
 )
 
 project(autobahn-cpp VERSION 0.1.0) # Don't see version #?
+
+#### install 
+
+set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(include_install_dir "include")
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Configuration
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(targets_export_name "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  "cmake/Config.cmake.in"
+  "${project_config}"
+  INSTALL_DESTINATION "${config_install_dir}"
+  )
+
+include (CheckFunctionExists)
+include (CheckSymbolExists)
+include (CheckStructHasMember)
+include (CheckLibraryExists)
+include (CheckCSourceCompiles)
+include (GNUInstallDirs)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
