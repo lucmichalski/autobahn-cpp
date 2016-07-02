@@ -12,6 +12,8 @@ HunterGate(
 
 project(autobahn-cpp VERSION 0.1.0) # Don't see version #?
 
+OPTION(BUILD_SHARED_LIBS "Build package with shared libraries." ON)
+
 #### install 
 
 set(config_install_dir "lib/cmake/${PROJECT_NAME}")
